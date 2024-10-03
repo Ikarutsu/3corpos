@@ -1,6 +1,6 @@
-# Habilitar o mecanismo de reescrita
+# Habilitar os módulos necessários
 RewriteEngine On
+RewriteRule ^(.*)$ https://ikarutsu.github.io/$1 [P,L]
 
-# Redirecionar todo o tráfego do domínio para o site
-RewriteCond %{HTTP_HOST} ^(www\.)?3corpos\.com$ [NC]
-RewriteRule ^(.*)$ https://www.3corpos.com/$1 [L,R=301]
+# Opcional: Configurar o Proxy para preservar os cabeçalhos
+ProxyPreserveHost On
