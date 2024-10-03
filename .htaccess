@@ -1,6 +1,0 @@
-# Habilitar os módulos necessários
-RewriteEngine On
-RewriteRule ^(.*)$ https://ikarutsu.github.io/$1 [P,L]
-
-# Opcional: Configurar o Proxy para preservar os cabeçalhos
-ProxyPreserveHost On
