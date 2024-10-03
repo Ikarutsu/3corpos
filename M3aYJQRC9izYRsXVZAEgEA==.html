@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M3aYJQRC9izYRsXVZAEgEA==</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; background-color: black; }
+    </style>
+</head>
+<body>
+    <canvas id="threeBodyCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById("threeBodyCanvas");
+        const ctx = canvas.getContext("2d");
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const G = 1;
+        const softening = 100;
+
+        function getRandomVelocity() {
+            return (Math.random() - 0.5) * 0.2;
+        }
+
+        const bodies = [
+            { 
+                x: Math.random() * 1000 - 500, 
+                y: Math.random() * 1000 - 500, 
+                vx: getRandomVelocity(), 
+                vy: getRandomVelocity(), 
+                ax: 0, 
+                ay: 0,
+                px: 0,
+                py: 0,
+                mass: 2000, 
+                color: 'orange' 
+            },
+            { 
+                x: Math.random() * 1000 - 500, 
+                y: Math.random() * 1000 - 500, 
+                vx: getRandomVelocity(), 
+                vy: getRandomVelocity(), 
+                ax: 0, 
+                ay: 0,
+                px: 0, 
+                py: 0, 
+                mass: 1000, 
+                color: 'yellow' 
+            },
+            { 
+                x: Math.random() * 1000 - 500, 
+                y: Math.random() * 1000 - 500, 
+                vx: getRandomVelocity(), 
+                vy: getRandomVelocity(), 
+                ax: 0, 
+                ay: 0,
+                px: 0, 
+                py: 0, 
+                mass: 500, 
+                color: 'red' 
+            },
+            { 
+                x: Math.random() * 1000 - 500, 
+                y: Math.random() * 1000 - 500, 
+                vx: getRandomVelocity(), 
+                vy: getRandomVelocity(), 
+                ax: 0, 
+                ay: 0,
+                px: 0, 
+                py: 0, 
+                mass: 150, 
+                color: 'green' 
+            }
+        ];
+
+        bodies.forEach(body => {
+            body.px = body.x - body.vx;
+            body.py = body.y - body.vy;
+        });
+
+        function distance(body1, body2) {
+            const dx = body1.x - body2.x;
+            const dy = body1.y - body2.y;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function getCenterOfMass() {
+            let totalMass = 0;
+            let x_cm = 0;
+            let y_cm = 0;
+
+            bodies.forEach(body => {
+                totalMass += body.mass;
+                x_cm += body.x * body.mass;
+                y_cm += body.y * body.mass;
+            });
+
+            return { x: x_cm / totalMass, y: y_cm / totalMass };
+        }
+
+        function getMaxDistance(cm) {
+            let maxDist = 0;
+            bodies.forEach(body => {
+                const dist = distance(body, cm);
+                if (dist > maxDist) {
+                    maxDist = dist;
+                }
+            });
+            return maxDist;
+        }
+
+        function updateForces() {
+            // Reset acelerations
+            bodies.forEach(body => {
+                body.ax = 0;
+                body.ay = 0;
+            });
+
+            for (let i = 0; i < bodies.length; i++) {
+                for (let j = 0; j < bodies.length; j++) {
+                    if (i !== j) {
+                        const dx = bodies[j].x - bodies[i].x;
+                        const dy = bodies[j].y - bodies[i].y;
+                        const distSq = dx * dx + dy * dy + softening * softening;
+                        const dist = Math.sqrt(distSq);
+                        const force = (G * bodies[i].mass * bodies[j].mass) / distSq;
+                        const angle = Math.atan2(dy, dx);
+                        bodies[i].ax += (force / bodies[i].mass) * Math.cos(angle);
+                        bodies[i].ay += (force / bodies[i].mass) * Math.sin(angle);
+                    }
+                }
+            }
+        }
+
+        function updatePositions() {
+            bodies.forEach(body => {
+                const newX = 2 * body.x - body.px + body.ax;
+                const newY = 2 * body.y - body.py + body.ay;
+                body.px = body.x;
+                body.py = body.y;
+                body.x = newX;
+                body.y = newY;
+            });
+        }
+
+        function computeCameraParameters() {
+            const cm = getCenterOfMass();
+            const maxDist = getMaxDistance(cm);
+            return { cm, maxDist };
+        }
+
+        function drawBodies(cm, scale) {
+            ctx.save(); 
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.scale(scale, scale);
+            ctx.translate(-cm.x, -cm.y);
+
+            bodies.forEach(body => {
+                ctx.beginPath();
+                ctx.arc(body.x, body.y, Math.max(body.mass / 100, 2), 0, 2 * Math.PI);
+                ctx.fillStyle = body.color;
+                ctx.fill();
+            });
+
+            ctx.restore();
+        }
+
+        let currentScale = 1;
+        const zoomSpeed = 0.05;
+
+        function animate() {
+            updateForces();
+            updatePositions();
+
+            const { cm, maxDist } = computeCameraParameters();
+
+            const margin = 200;
+            const targetScale = Math.min(
+                canvas.width / (2 * (maxDist + margin)),
+                canvas.height / (2 * (maxDist + margin))
+            );
+
+            currentScale += (targetScale - currentScale) * zoomSpeed;
+
+            drawBodies(cm, currentScale);
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
